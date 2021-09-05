@@ -1,48 +1,47 @@
-# Anticipate the electricity consumption needs of buildings [OC-P4]
+# Segment customers of an e-commerce site [OC-P5]
 
 ## **Problem to solve**
 
-You work for **"the city of Seattle"**. To achieve its goal of being a neutral city in carbon emissions by 2050, your team is paying close attention to the emissions of buildings not intended for housing.
+You are a consultant for **Olist**, a sales solution on online marketplaces. **Olist** wants you to provide their e-commerce teams with customer segmentation that they can use on a daily basis for their communication campaigns. 
 
-### **Problem of the city of Seattle**
-Thorough readings were taken by your agents in 2015 and 2016. However, these readings are expensive to obtain, and from those already taken, you want to try to predict the CO2 emissions and the total energy consumption of buildings. for which they have not yet been measured.
+You will need to provide the marketing team with an actionable description of your segmentation and its underlying logic for optimal use, as well as a maintenance contract proposal based on an analysis of the stability of the segments over time.
 
 ## **Your mission**
 
-You've just come out of a briefing meeting with your team. Here is a summary of your mission:
+Your mission is to help the **Olist** teams understand the different types of users throught the following goals:
 
-1. Perform a short exploratory analysis.
-2. Test different prediction models in order to best answer the problem.
+1. Understand the different types of users through their behavior and their personal data. 
+2. Use unsupervised methods to group together clients of similar profiles / categories.
+
+These categories can be used by the **Olist** marketing team to communicate better.
 
 ### **Considerations**
 
-- The goal is to do without annual consumption readings (beware of data leaks), but nothing prevents you from deducing simpler variables (nature and proportions of energy sources used).
-- Pay close attention to the treatment of the different variables, both to find new information (can we deduce interesting things from a simple address?) And to optimize performance by applying simple transformations to the variables (normalization, going to log, etc.).
-- Set up a rigorous evaluation of regression performance, and optimize hyperparameters and ML algorithm choice using cross-validation
+- For confidentiality reasons, **Olist** does not provide a lot of data, it's up to you to dig into what you have and create the best features to use it.
+
+On the other hand, **Olist** has specified their request as follows:
+
+- The proposed segmentation must be actionable and easy to use for the marketing team.
+- You will assess how often the segmentation needs to be updated, in order to be able to perform a maintenance contract quote.
+- The code provided must respect the PEP8 convention, to be usable by Olist.
 
 ## **The data**
 
+For this mission, **Olist** has provided with an anonymized database containing information on order history, products purchased, satisfaction reviews, and customer location since January 2017.
+
 The datasets are availabe on the following links
 
-- [**2015**](https://www.kaggle.com/city-of-seattle/sea-building-energy-benchmarking#2015-building-energy-benchmarking.csv)
-- [**2016**](https://www.kaggle.com/city-of-seattle/sea-building-energy-benchmarking?select=2016-building-energy-benchmarking.csv)
-
-Based on the official site of [**Seattle Open Data**](https://data.seattle.gov/), we can see the dataset **metadata** to know all features
-
-- [**2015**](https://data.seattle.gov/dataset/2015-Building-Energy-Benchmarking/h7rm-fz6m)
-- [**2016**](https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz-gwpy)
-
-On the other hand, we get the means of [**Energy Star Score**](https://www.energystar.gov/buildings/benchmark/analyze_benchmarking_results)
+- [**Brazilian E-Commerce Public Dataset by Olist**](https://www.kaggle.com/olistbr/brazilian-ecommerce)
 
 ## **Repository file structure**
 
 - cleaning_notebook.ipynb: Cleaning notebook
 - modeling_notebook.ipynb: Notebook with predictions
-- img: Images and graphs of the project
+- datasets: datasets of the project
+- images: Images and graphs of the project
 - supports: Folder with documents to support the work done
-    - Project 4 presentation: Project presentation in French
+    - Project 5 presentation: Project presentation in French
 
 ### **Final note**
 
 - The notebook is optimized to be used with **Jupyter lab**.
-- The **datasets** should be located in folder called **datasets** in the root path
