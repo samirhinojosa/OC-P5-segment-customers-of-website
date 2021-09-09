@@ -4,9 +4,13 @@ import gc
 import timeit
 import math
 from math import prod
+import scipy.stats as stats
 
 ## General
 import pandas as pd
+
+SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+SUP = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
 
 
@@ -74,7 +78,7 @@ def df_analysis(df, name_df, *args, **kwargs):
         if columns is not None:
             print("\n- The key(s):", columns, "is not present multiple times in the dataframe.\n  It CAN be used as a primary key.") if df.size == df.drop_duplicates(columns).size else \
                 print("\n- The key(s):", columns, "is present multiple times in the dataframe.\n  It CANNOT be used as a primary key.")
-        
+            
         if type_analysis == "summarized":
             print("\n")
         
@@ -95,7 +99,7 @@ def df_analysis(df, name_df, *args, **kwargs):
                 df_resume = df_resume[ORDERING_COMPLETE]
                 print("\n- Type object and records by columns      (",memory_usage,")")
                 print("--------------------------------------------------------------------")
-                
+            
             display(df_resume.sort_values("records", ascending=False))
             
             pd.reset_option("display.max_rows") # reset max of showing rows
@@ -117,3 +121,54 @@ def df_analysis(df, name_df, *args, **kwargs):
             del df_resume
             gc.collect()
             df_resume = pd.DataFrame()
+            
+
+def normality_test(df):
+    """
+    Method used to make the normality test.
+
+    Parameters:
+    -----------------
+        df (pandas.DataFrame): Dataset to analyze
+
+    Returns:
+    -----------------
+        None. 
+        Print the tests on a new Dataset. 
+    """
+    
+    list_test = {
+        "Shapiro-Wilk":stats.shapiro, "D’Agostino’s K^2":stats.normaltest,
+        "Kolmogorov-Smirnov":stats.kstest
+    }
+    
+    
+    alpha = 0.05
+    fail_to_reject_H = "Sample looks Gaussian (fail to reject H0)"
+    reject_H = "Sample does not look Gaussian (reject H0)"
+    
+    variable, test_name, result, hypothesis = [[] for i in range(4)]
+    
+    for key, value in list_test.items():
+    
+        for col in df.columns:
+            
+            if df[col].dtypes == "float64" or df[col].dtypes == "int64":
+                variable.append(col)
+                test_name.append(key)
+                
+                if key == "Kolmogorov-Smirnov":
+                    stat, p_value = value(df[col], cdf="norm")
+                else:
+                    stat, p_value = value(df[col])
+                    
+                result.append("Statistics=%.3f, p-value=%.3f" % (stat, p_value))
+                hypothesis.append(fail_to_reject_H.translate(SUB)) if p_value > alpha else hypothesis.append(reject_H.translate(SUB))
+                
+    df_normality_test = pd.DataFrame({
+                            "variable": variable,
+                            "normality test": test_name, 
+                            "result": result,
+                            "hypothesis": hypothesis})
+    
+    display(df_normality_test)
