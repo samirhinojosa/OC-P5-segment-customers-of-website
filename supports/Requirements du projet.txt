@@ -1,0 +1,43 @@
+🕵️‍ Évaluation des compétences
+
+🎯Transformer les variables pertinentes d'un modèle d'apprentissage non supervisé
+
+❒ Les variables pertinentes ont été transformées pour permettre leur exploitation (variables catégorielles en particulier).
+
+❒ Une ou plusieurs variables pertinentes permettant d'améliorer la solution proposée ont été créées.
+
+ 
+
+🎯Mettre en place le modèle d'apprentissage non supervisé adapté au problème métier
+
+❒ Le nombre de segments et la répartition est adapté à la problématique métier.
+
+❒ La stratégie d'ajout de nouveaux clients a été explicitée.
+
+❒ La nature des variables d'entrée a été prise en compte dans le choix de l'algorithme et de la distance.
+
+ 
+
+🎯Évaluer les performances d’un modèle d'apprentissage non supervisé
+
+❒ La forme des clusters est évaluée.
+
+❒ La stabilité des clusters est évaluée.
+
+❒ La compatibilité avec des connaissances extérieures est évaluée ("test set" et/ou a priori).
+
+ 
+
+🎯Adapter les hyperparamètres d'un algorithme non supervisé afin de l'améliorer
+
+❒ Les étapes d'évaluation sont automatisées pour tester facilement plusieurs combinaisons de paramètres.
+
+❒ Les valeurs de paramètres testés sont pertinemment choisies.
+
+ 
+
+🎯Respecter la convention PEP8 (facultatif)
+
+❒ La convention pep8 est respectée
+
+❒ Le code est commentée (commentaires réguliers, docstrings dans les fonctions) 
