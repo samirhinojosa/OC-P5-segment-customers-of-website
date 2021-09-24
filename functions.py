@@ -1,174 +1,115 @@
-## df_analysis
-import io
-import gc
-import timeit
-import math
-from math import prod
-import scipy.stats as stats
-
-## General
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+import numpy as np
 import pandas as pd
+from scipy.cluster.hierarchy import dendrogram
 
-SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-SUP = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+def display_circles(pcs, n_comp, pca, axis_ranks, labels=None, label_rotation=0, lims=None):
+    for d1, d2 in axis_ranks: # On affiche les 3 premiers plans factoriels, donc les 6 premières composantes
+        if d2 < n_comp:
 
+            # initialisation de la figure
+            fig, ax = plt.subplots(figsize=(10,9))
 
+            # détermination des limites du graphique
+            if lims is not None :
+                xmin, xmax, ymin, ymax = lims
+            elif pcs.shape[1] < 30 :
+                xmin, xmax, ymin, ymax = -1, 1, -1, 1
+            else :
+                xmin, xmax, ymin, ymax = min(pcs[d1,:]), max(pcs[d1,:]), min(pcs[d2,:]), max(pcs[d2,:])
 
-
-def df_analysis(df, name_df, *args, **kwargs):
-    """
-    Method used to analyze on the DataFrame.
-
-    Parameters:
-    -----------------
-        df (pandas.DataFrame): Dataset to analyze
-        name_df (str): Dataset name
-        
-        *args, **kwargs:
-        -----------------
-            columns (list): Dataframe keys in list format
-            flag (str): Flag to show complete information about the dataset to analyse
-                        "complete" shows all information about the dataset
-
-    Returns:
-    -----------------
-        None. 
-        Print the analysis on the Dataset. 
-    """
-    
-    # Getting the variables
-    columns = kwargs.get("columns", None)
-    type_analysis = kwargs.get("type_analysis", None)
-    
-    ORDERING_COMPLETE = [
-        "name", "type", "records", "unique", "# NaN", "% NaN", "mean", "min", "25%", "50%", "75%", "max", "std"
-    ]
-    
-    # Calculating the memory usage based on dataframe.info()
-    buf = io.StringIO()
-    df.info(buf=buf)
-    memory_usage = buf.getvalue().split('\n')[-2]
-    
-    if df.empty:
-        print("The", name_df, "dataset is empty. Please verify the file.")
-    else:
-        empty_cols = [col for col in df.columns if df[col].isna().all()] # identifying empty columns
-        df_rows_duplicates = df[df.duplicated()] #identifying full duplicates rows
-        
-        # Creating a dataset based on Type object and records by columns
-        type_cols = df.dtypes.apply(lambda x: x.name).to_dict() 
-        df_resume = pd.DataFrame(list(type_cols.items()), columns = ["name", "type"])
-        df_resume["records"] = list(df.count())
-        df_resume["# NaN"] = list(df.isnull().sum())
-        df_resume["% NaN"] = list(((df.isnull().sum() / len(df.index))*100).round(2))
-        
-        print("\nAnalysis of", name_df, "dataset")
-        print("--------------------------------------------------------------------")
-        print("- Dataset shape:                 ", df.shape[0], "rows and", df.shape[1], "columns")
-        print("- Total of NaN values:           ", df.isna().sum().sum())
-        print("- Percentage of NaN:             ", round((df.isna().sum().sum() / prod(df.shape)) * 100, 2), "%")
-        print("- Total of full duplicates rows: ", df_rows_duplicates.shape[0])
-        print("- Total of empty rows:           ", df.shape[0] - df.dropna(axis="rows", how="all").shape[0]) if df.dropna(axis="rows", how="all").shape[0] < df.shape[0] else \
-                    print("- Total of empty rows:            0")
-        print("- Total of empty columns:        ", len(empty_cols))
-        print("  + The empty column is:         ", empty_cols) if len(empty_cols) == 1 else \
-                    print("  + The empty column are:         ", empty_cols) if len(empty_cols) >= 1 else None
-        print("- Unique indexes:                ", df.index.is_unique)
-        
-        if columns is not None:
-            print("\n- The key(s):", columns, "is not present multiple times in the dataframe.\n  It CAN be used as a primary key.") if df.size == df.drop_duplicates(columns).size else \
-                print("\n- The key(s):", columns, "is present multiple times in the dataframe.\n  It CANNOT be used as a primary key.")
-            
-        if type_analysis == "summarized":
-            print("\n")
-        
-        if type_analysis is None or type_analysis != "summarized":
-            pd.set_option("display.max_rows", None) # show full of showing rows
-            pd.set_option("display.max_columns", None) # show full of showing cols
-            pd.set_option("display.max_colwidth", None) # show full width of showing cols
-            pd.set_option("display.float_format", lambda x: "%.5f" % x) # show full content in cell    
-            
-            if type_analysis is None or type_analysis != "complete":
-                print("\n- Type object and records by columns      (",memory_usage,")")
-                print("--------------------------------------------------------------------")
-            elif type_analysis == "complete" and (df.select_dtypes(["int64"]).shape[1] > 0 or df.select_dtypes(["float64"]).shape[1] > 0):
-                df_resume["unique"] = list(df.nunique())
-                df_desc = pd.DataFrame(df.describe().T).reset_index()
-                df_desc = df_desc.rename(columns={"index": "name"})
-                df_resume = df_resume.merge(right=df_desc[["name", "mean", "min", "25%", "50%", "75%", "max", "std"]], on="name", how="left")
-                df_resume = df_resume[ORDERING_COMPLETE]
-                print("\n- Type object and records by columns      (",memory_usage,")")
-                print("--------------------------------------------------------------------")
-            
-            display(df_resume.sort_values("records", ascending=False))
-            
-            pd.reset_option("display.max_rows") # reset max of showing rows
-            pd.reset_option("display.max_columns") # reset max of showing cols
-            pd.reset_option("display.max_colwidth") # reset width of showing cols
-            pd.reset_option("display.float_format") # reset show full content in cell
-            
-        # deleting dataframe to free memory
-        if type_analysis == "complete":
-            
-            if df.select_dtypes(["int64"]).shape[1] > 0 or df.select_dtypes(["float64"]).shape[1] > 0:
-                del [[df_resume, df_desc]]
+            # affichage des flèches
+            # s'il y a plus de 30 flèches, on n'affiche pas le triangle à leur extrémité
+            if pcs.shape[1] < 30 :
+                plt.quiver(np.zeros(pcs.shape[1]), np.zeros(pcs.shape[1]),
+                   pcs[d1,:], pcs[d2,:], 
+                   angles='xy', scale_units='xy', scale=1, color="grey")
+                # (voir la doc : https://matplotlib.org/api/_as_gen/matplotlib.pyplot.quiver.html)
             else:
-                del [[df_resume]]
+                lines = [[[0,0],[x,y]] for x,y in pcs[[d1,d2]].T]
+                ax.add_collection(LineCollection(lines, axes=ax, alpha=.1, color='black'))
             
-            gc.collect()
-            df_resume, df_desc = (pd.DataFrame() for i in range(2))
-        else:
-            del df_resume
-            gc.collect()
-            df_resume = pd.DataFrame()
+            # affichage des noms des variables  
+            if labels is not None:  
+                for i,(x, y) in enumerate(pcs[[d1,d2]].T):
+                    if x >= xmin and x <= xmax and y >= ymin and y <= ymax :
+                        plt.text(x, y, labels[i], fontsize='14', ha='center', va='center', rotation=label_rotation, color="blue", alpha=0.5)
             
+            # affichage du cercle
+            circle = plt.Circle((0,0), 1, facecolor='none', edgecolor='b')
+            plt.gca().add_artist(circle)
 
-def normality_test(df):
-    """
-    Method used to make the normality test.
+            # définition des limites du graphique
+            plt.xlim(xmin, xmax)
+            plt.ylim(ymin, ymax)
+        
+            # affichage des lignes horizontales et verticales
+            plt.plot([-1, 1], [0, 0], color='grey', ls='--')
+            plt.plot([0, 0], [-1, 1], color='grey', ls='--')
 
-    Parameters:
-    -----------------
-        df (pandas.DataFrame): Dataset to analyze
+            # nom des axes, avec le pourcentage d'inertie expliqué
+            plt.xlabel('F{} ({}%)'.format(d1+1, round(100*pca.explained_variance_ratio_[d1],1)))
+            plt.ylabel('F{} ({}%)'.format(d2+1, round(100*pca.explained_variance_ratio_[d2],1)))
 
-    Returns:
-    -----------------
-        None. 
-        Print the tests on a new Dataset. 
-    """
-    
-    list_test = {
-        "Shapiro-Wilk":stats.shapiro, "D’Agostino’s K^2":stats.normaltest,
-        "Kolmogorov-Smirnov":stats.kstest
-    }
-    
-    
-    alpha = 0.05
-    fail_to_reject_H = "Sample looks Gaussian (fail to reject H0)"
-    reject_H = "Sample does not look Gaussian (reject H0)"
-    
-    variable, test_name, result, hypothesis = [[] for i in range(4)]
-    
-    for key, value in list_test.items():
-    
-        for col in df.columns:
-            
-            if df[col].dtypes == "float64" or df[col].dtypes == "int64":
-                variable.append(col)
-                test_name.append(key)
-                
-                if key == "Kolmogorov-Smirnov":
-                    stat, p_value = value(df[col], cdf="norm")
-                else:
-                    stat, p_value = value(df[col])
-                    
-                result.append("Statistics=%.3f, p-value=%.3f" % (stat, p_value))
-                hypothesis.append(fail_to_reject_H.translate(SUB)) if p_value > alpha else hypothesis.append(reject_H.translate(SUB))
-                
-    df_normality_test = pd.DataFrame({
-                            "variable": variable,
-                            "normality test": test_name, 
-                            "result": result,
-                            "hypothesis": hypothesis})
-    
-    display(df_normality_test)
+            plt.title("Correlation Circle (F{} et F{})".format(d1+1, d2+1))
+            plt.savefig("images/correlations-circle-(F{} et F{}).png".format(d1+1, d2+1))
+            plt.show(block=False)
+        
+           
+def display_factorial_planes(X_proj, n_comp, pca, axis_ranks, labels=None,
+                             width=16, alpha=1, n_cols=3, illus_var=None,
+                             lab_on=True, size=10):
+    n_rows = (n_comp+1)//n_cols
+    fig = plt.figure(figsize=(width,n_rows*width/n_cols))
+    # boucle sur chaque plan factoriel
+    for i, (d1,d2) in (enumerate(axis_ranks)):
+        if d2 < n_comp:
+            ax = fig.add_subplot(n_rows, n_cols, i+1)
+            # points
+            if illus_var is None:
+                ax.scatter(X_proj[:, d1], X_proj[:, d2], alpha=alpha, s=size)
+            else:
+                illus_var = np.array(illus_var)
+                for value in np.unique(illus_var):
+                    sel = np.where(illus_var == value)
+                    ax.scatter(X_proj[sel, d1], X_proj[sel, d2], 
+                                alpha=alpha, label=value)
+                ax.legend()
+            # labels points
+            if labels is not None and lab_on:
+                for i,(x,y) in enumerate(X_proj[:,[d1,d2]]):
+                    ax.text(x, y, labels[i],
+                              fontsize='14', ha='center',va='center')   
+            # limites
+            bound = np.max(np.abs(X_proj[:, [d1,d2]])) * 1.1
+            ax.set(xlim=(-bound,bound), ylim=(-bound,bound))
+            # lignes horizontales et verticales
+            ax.plot([-100, 100], [0, 0], color='grey', ls='--')
+            ax.plot([0, 0], [-100, 100], color='grey', ls='--')
+            # nom des axes, avec le pourcentage d'inertie expliqué
+            ax.set_xlabel('F{} ({}%)'.format(d1+1, round(100*pca.explained_variance_ratio_[d1],1)))
+            ax.set_ylabel('F{} ({}%)'.format(d2+1, round(100*pca.explained_variance_ratio_[d2],1)))
+            ax.set_title("Projection of individuals (sur F{} et F{})".format(d1+1, d2+1))
+            plt.savefig("images/projection-of-individuals-(F{} et F{}).png".format(d1+1, d2+1))
+    plt.tight_layout()
+
+def display_scree_plot(pca):
+    scree = pca.explained_variance_ratio_*100
+    plt.bar(np.arange(len(scree))+1, scree)
+    plt.plot(np.arange(len(scree))+1, scree.cumsum(),c="red",marker='o')
+    plt.xlabel("Rank of the inertia axis")
+    plt.ylabel("Percentage of inertia")
+    plt.title("Scree of eigenvalues")
+    plt.show(block=False)
+
+def plot_dendrogram(Z, names):
+    plt.figure(figsize=(10,25))
+    plt.title('Hierarchical Clustering Dendrogram')
+    plt.xlabel('distance')
+    dendrogram(
+        Z,
+        labels = names,
+        orientation = "left",
+    )
+    plt.show()
