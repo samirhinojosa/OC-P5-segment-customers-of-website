@@ -88,10 +88,10 @@ def display_factorial_planes(X_proj, n_comp, pca, axis_ranks, labels=None,
             ax.plot([-100, 100], [0, 0], color='grey', ls='--')
             ax.plot([0, 0], [-100, 100], color='grey', ls='--')
             # nom des axes, avec le pourcentage d'inertie expliqué
-            ax.set_xlabel('F{} ({}%)'.format(d1+1, round(100*pca.explained_variance_ratio_[d1],1)))
-            ax.set_ylabel('F{} ({}%)'.format(d2+1, round(100*pca.explained_variance_ratio_[d2],1)))
-            ax.set_title("Projection of individuals (sur F{} et F{})".format(d1+1, d2+1))
-            plt.savefig("images/projection-of-individuals-(F{} et F{}).png".format(d1+1, d2+1))
+            ax.set_xlabel('PC{} ({}%)'.format(d1+1, round(100*pca.explained_variance_ratio_[d1],1)))
+            ax.set_ylabel('PC{} ({}%)'.format(d2+1, round(100*pca.explained_variance_ratio_[d2],1)))
+            ax.set_title("Projection of individuals (on PC{} et PC{})".format(d1+1, d2+1))
+            plt.savefig("images/projection-of-individuals-(PC{} et PC{}).png".format(d1+1, d2+1))
     plt.tight_layout()
 
 def display_scree_plot(pca):
